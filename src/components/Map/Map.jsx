@@ -1,44 +1,107 @@
-import React, { useState, useCallback } from 'react'
-import { MapContainer, TileLayer } from 'react-leaflet'
+import React from 'react'
+import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet'
+import L, { divIcon } from 'leaflet'
 import View from '../Wrappers/View/View'
+import * as turf from '@turf/turf'
 import 'leaflet/dist/leaflet.css'
 import './Map.styles.css'
 
 const Map = ({
   latitude,
   longitude,
-  zoom
+  zoom,
+  geoJsonPZ,
+  geoJsonCarreras,
+  geoJsonRios,
+  geoJsonDistritos,
+  geoJsonPoblados,
+  mapRef
 }) => {
 
-  const [map, setMap] = useState(null);
+  const customMarkerIcon = (name) =>
+    divIcon({
+      html: name,
+      className: "icon"
+    })
 
-  const updateMapCenterZoom = useCallback((newCenter, newZoom) => {
-    console.log('newZoom', newZoom)
-    if (map !== null) {
-      map.setView(newCenter, newZoom);
-    }
-  }, [map]);
+  const setIconPoblado = ({ properties }, latlng) => {
+    return L.marker(latlng, { icon: customMarkerIcon('Poblado: ' + properties.NOMBRE) })
+  }
+
+  const setIconDistrito = ({ properties }, latlng) => {
+    return L.marker(latlng, { icon: customMarkerIcon('Distrito: ' + properties.NDISTRITO) })
+  }
+
+
+  const convertPolygonsToPoints = (geoJsonPolygons) => {
+    const points = turf.points([]);
+
+    geoJsonPolygons.features.forEach((polygon) => {
+      const centroid = turf.centerOfMass(polygon)
+      centroid.properties = { ...polygon.properties }
+      points.features.push(centroid)
+    });
+
+    return points;
+  };
+
+
+  console.log(convertPolygonsToPoints(geoJsonDistritos))
 
   return (
     <View>
       <MapContainer
         center={[latitude, longitude]}
         zoom={zoom}
-        preferCanvas
+        ref={mapRef}
+        zoomControl={false}
         scrollWheelZoom={false}
-        whenCreated={setMap}
+        maxBoundsViscosity={1.0}
+        touchZoom={false}
+        doubleClickZoom={false}
+        boxZoom={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
+        <GeoJSON 
+          data={geoJsonPZ}
+        />
+        {
+          zoom > 9 && 
+            <GeoJSON 
+              data={geoJsonCarreras}
+            />
+        }
+        {
+          zoom > 10 && 
+            <GeoJSON 
+              data={geoJsonRios}
+            />
+        }
+        {
+          zoom > 11 && 
+            <View>
+              <GeoJSON 
+                data={geoJsonDistritos}
+              />
+              <GeoJSON 
+                data={convertPolygonsToPoints(geoJsonDistritos)}
+                pointToLayer={setIconDistrito}
+              />
+            </View>
+        }
+        {
+          zoom > 12 && 
+            <GeoJSON 
+              data={geoJsonPoblados}
+              pointToLayer={setIconPoblado}
+            />
+        }
       </MapContainer>
-      <button type="button" onClick={() => updateMapCenterZoom([14.389786, 121.047566], 8)}>
-        See Location
-      </button>
     </View>
   )
 }
 
-export default Map
+export default Map;
