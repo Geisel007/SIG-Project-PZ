@@ -25,29 +25,46 @@ const Map = ({
     })
 
   const setIconPoblado = ({ properties }, latlng) => {
-    return L.marker(latlng, { icon: customMarkerIcon('Poblado: ' + properties.NOMBRE) })
+    return L.marker(latlng, { icon: customMarkerIcon('POBLADO ' + properties.NOMBRE) })
   }
 
   const setIconDistrito = ({ properties }, latlng) => {
-    return L.marker(latlng, { icon: customMarkerIcon('Distrito: ' + properties.NDISTRITO) })
+    return L.marker(latlng, { icon: customMarkerIcon('DISTRITO ' + properties.NDISTRITO) })
   }
 
+  const setIconRio = ({ properties }, latlng) => {
+    return L.marker(latlng, { icon: customMarkerIcon(properties.NOMBRE) })
+  }
 
   const convertPolygonsToPoints = (geoJsonPolygons) => {
-    const points = turf.points([]);
+    const points = turf.points([])
 
     geoJsonPolygons.features.forEach((polygon) => {
       const centroid = turf.centerOfMass(polygon)
       centroid.properties = { ...polygon.properties }
       points.features.push(centroid)
-    });
+    })
 
-    return points;
-  };
+    return points
+  }
 
-
-  console.log(convertPolygonsToPoints(geoJsonDistritos))
-
+  const convertLineStringsToPoints = (geoJsonLineStrings) => {
+    const points = turf.points([])
+  
+    geoJsonLineStrings.features.forEach((lineString) => {
+      const line = turf.lineString(lineString.geometry.coordinates)
+      const centroid = turf.centroid(line)
+  
+      // Copiar las propiedades originales
+      centroid.properties = { ...lineString.properties }
+  
+      points.features.push(centroid)
+    })
+  
+    return points
+  }
+  
+  
   return (
     <View>
       <MapContainer
@@ -62,7 +79,7 @@ const Map = ({
         boxZoom={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <GeoJSON 
@@ -76,9 +93,15 @@ const Map = ({
         }
         {
           zoom > 10 && 
-            <GeoJSON 
-              data={geoJsonRios}
-            />
+            <View>
+              <GeoJSON 
+                data={geoJsonRios}
+              />
+              <GeoJSON 
+                data={convertLineStringsToPoints(geoJsonRios)}
+                pointToLayer={setIconRio}
+              />
+            </View>
         }
         {
           zoom > 11 && 
@@ -104,4 +127,4 @@ const Map = ({
   )
 }
 
-export default Map;
+export default Map
