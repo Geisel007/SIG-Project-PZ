@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet'
 import L, { divIcon } from 'leaflet'
 import View from '../Wrappers/View/View'
 import * as turf from '@turf/turf'

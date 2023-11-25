@@ -1,5 +1,5 @@
 // React
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 // Components
 import View from '../src/components/Wrappers/View/View'
 import Map from './components/Map/Map'
